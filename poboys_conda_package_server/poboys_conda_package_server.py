@@ -6,7 +6,7 @@ from subprocess import call
 import argparse
 
 
-platforms = ['linux-64', 'win-64', 'osx-64']
+platforms = ['noarch', 'linux-64', 'win-64', 'osx-64']
 
 
 def ensure_pkgs_dir_exists():
