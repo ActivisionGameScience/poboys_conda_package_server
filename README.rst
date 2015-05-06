@@ -22,6 +22,18 @@ For ``conda`` to see it, add the following line to your ``.condarc``::
     - http://your.hostname:6969/pkgs
 
 
+Docker instructions
+===================
+
+From where you cloned it is easy to build a ``docker`` image::
+
+    sudo docker build -t poboys_conda_package_server .
+
+Then it is easy to launch it (and persist the data on the host)::
+
+    sudo docker run -d --name poboys_conda_package_server -v /data/dir/on/host:/opt/poboys_conda_package_server poboys_conda_package_server
+
+
 License
 =======
 
