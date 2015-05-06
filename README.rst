@@ -31,7 +31,7 @@ From where you cloned it is easy to build a ``docker`` image::
 
 Then it is easy to launch it (and persist the data on the host)::
 
-    sudo docker run -d --name poboys_conda_package_server -v /data/dir/on/host:/opt/poboys_conda_package_server poboys_conda_package_server
+    sudo docker run -d --name poboys_conda_package_server -p 6969:6969 -v /data/dir/on/host:/opt/poboys_conda_package_server poboys_conda_package_server
 
 
 License
