@@ -3,8 +3,8 @@
 ==============================
 
 This is a server that acts as a repository for conda packages.  It is a "poor-man's" version of
-Anaconda Server, but only for small groups that are sitting behind a firewall
-and don't worry about authentication.  Anybody can upload and delete packages!
+Anaconda Server.  Only use it if you are a small group sitting behind a firewall.
+There is no authentication, nor logging.  Anybody can upload and delete packages!
 
 The server requires ``conda`` and ``bottle`` to run.
 
@@ -25,11 +25,19 @@ In order for a client to recognize it, add the following line to its ``.condarc`
 Docker instructions
 ===================
 
-From where you cloned it is easy to build a ``docker`` image::
+First, we need to create a barebones docker image that contains ``conda``.  From
+where you cloned this repository run::
+
+    cd conda3
+    vim Dockerfile   <-- make changes as necessary to match your system
+    sudo docker build -t conda3 .
+    cd ..
+    
+Now create a derived docker image for ``poboys_conda_package_server``::
 
     sudo docker build -t poboys_conda_package_server .
 
-Then it is easy to launch it (and persist the data on the host)::
+and launch it (and persist the data on the host)::
 
     sudo docker run -d --name poboys_conda_package_server -p 6969:6969 -v /data/dir/on/host:/opt/poboys_conda_package_server poboys_conda_package_server
 
