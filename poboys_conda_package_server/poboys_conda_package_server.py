@@ -43,7 +43,7 @@ def do_upload():
 
     ensure_platform_dir_exists(platform)
 
-    filename.save('pkgs/'+platform, overwrite=True) 
+    filename.save('pkgs/'+platform, overwrite=False) 
     os.chdir('pkgs/'+platform)
     call(["conda", "index"])
     os.chdir('../../')
