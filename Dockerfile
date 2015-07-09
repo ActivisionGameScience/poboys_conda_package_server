@@ -4,7 +4,7 @@ FROM conda3
 RUN conda create -n dev bottle -y
 
 # copy to /opt
-COPY poboys_conda_package_server /opt/poboys_staging
+COPY src /opt/poboys_staging
 RUN chown -R root:root /opt/poboys_staging
 WORKDIR /opt/poboys_staging
 

@@ -3,21 +3,21 @@
 ==============================
 
 This is a server that acts as a repository for conda packages.  It is a "poor-man's" version of
-Anaconda Server + Onsite Binstar, but only for small groups that are sitting behind a firewall
-and don't worry about authentication.  Upload and delete packages at will!
+Anaconda Server, but only for small groups that are sitting behind a firewall
+and don't worry about authentication.  Anybody can upload and delete packages!
 
-You must have ``conda`` and ``bottle`` installed (and in your path).
+The server requires ``conda`` and ``bottle`` to run.
 
-You can start it like this::
+After cloning, you can start the server like this::
 
-    cd poboys_conda_package_server/
-    python poboy_conda_package_server.py --port 6969
+    cd poboys_conda_package_server/src
+    python poboys_conda_package_server.py --port 6969
 
-Then you can browse to the url and have a look::
+It has a simple web interface - browse to the appropriate url and have a look::
 
     http://your.hostname:6969
 
-For ``conda`` to see it, add the following line to your ``.condarc``::
+In order for a client to recognize it, add the following line to its ``.condarc``::
 
     - http://your.hostname:6969/pkgs
 
