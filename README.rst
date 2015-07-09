@@ -2,15 +2,15 @@
  Poboy's Conda Package Server
 ==============================
 
-This is a server that acts as a repository for conda packages.  It is a "poor-man's" version of
-Anaconda Server.  Only use it if you are a small group sitting behind a firewall.
+This is a server that acts as a repository for conda packages.  It is a "poor-man's" replacement
+for Anaconda Server.  Only small groups behind a firewall should feel comfortable using this.
 There is no authentication, nor logging.  Anybody can upload and delete packages!
 
 The server requires ``conda`` and ``bottle`` to run.
 
 After cloning, you can start the server like this::
 
-    cd poboys_conda_package_server/src
+    cd src
     python poboys_conda_package_server.py --port 6969
 
 It has a simple web interface - browse to the appropriate url and have a look::
@@ -25,8 +25,7 @@ In order for a client to recognize it, add the following line to its ``.condarc`
 Docker instructions
 ===================
 
-First, we need to create a barebones docker image that contains ``conda``.  From
-where you cloned this repository run::
+First, we need to create a barebones docker image that contains ``conda``::
 
     cd conda3
     vim Dockerfile   <-- make changes as necessary to match your system
