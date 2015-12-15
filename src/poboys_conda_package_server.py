@@ -1,6 +1,6 @@
 #!/bin/env python
 
-from bottle import get, post, run, template, request, static_file, redirect
+from bottle import get, post, run, template, request, static_file, redirect, abort
 import os
 from subprocess import call
 import argparse
@@ -23,6 +23,8 @@ def ensure_platform_dir_exists(platform):
     ensure_pkgs_dir_exists()
 
     try: 
+        if platform not in platforms:
+            abort(404, "Invalid platform %s" % platform)
         os.makedirs('pkgs/' + platform)
     except OSError:
         if not os.path.isdir('pkgs/' + platform):
@@ -54,7 +56,7 @@ def do_upload():
 def get_pkgs():
 
     ensure_pkgs_dir_exists()
-    dirlist = [ f for f in os.listdir('pkgs') ]
+    dirlist = sorted([ f for f in os.listdir('pkgs') ])
     return template('dirlist_to_links', header='Current Platforms', parentdir='/pkgs', dirlist=dirlist, allow_delete=False)
 
 
