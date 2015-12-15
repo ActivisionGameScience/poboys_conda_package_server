@@ -68,7 +68,7 @@ def get_platform(platform):
 
     ensure_platform_dir_exists(platform)
 
-    dirlist = [ f for f in os.listdir('pkgs/'+platform) ]
+    dirlist = sorted([ f for f in os.listdir('pkgs/'+platform) ])
     return template('dirlist_to_links', header='Packages', parentdir='/pkgs/'+platform, dirlist=dirlist, allow_delete=True)
 
 
