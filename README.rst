@@ -13,6 +13,12 @@ After cloning, you can start the server like this::
     cd src
     python poboys_conda_package_server.py --port 6969
 
+Optionally, you can have it sync with an s3 bucket (this assumes that you have ``boto3`` installed)::
+
+    python poboys_conda_package_server.py --port 6969 --s3_bucket <YOURBUCKET>
+
+(You should set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY env vars for this to work).
+
 It has a simple web interface - browse to the appropriate url and have a look::
 
     http://your.hostname:6969
@@ -25,20 +31,18 @@ In order for a client to recognize it, add the following line to its ``.condarc`
 Docker instructions
 ===================
 
-First, we need to create a barebones docker image that contains ``conda``::
-
-    cd conda3
-    vim Dockerfile   <-- make changes as necessary to match your system
-    sudo docker build -t conda3 .
-    cd ..
-    
-Now create a derived docker image for ``poboys_conda_package_server``::
+First create a docker image for ``poboys_conda_package_server``::
 
     sudo docker build -t poboys_conda_package_server .
 
-and launch it (and persist the data on the host)::
+and launch it (the ``-v`` is there to persist the data on the host)::
 
     sudo docker run -d --name poboys_conda_package_server -p 6969:6969 -v /data/dir/on/host:/opt/poboys_conda_package_server poboys_conda_package_server
+
+If you want to specify a different port or an S3 bucket then you can modify the ``Dockerfile`` before building to add the following env vars::
+
+    POBOYS_PORT=6969
+    POBOYS_S3_BUCKET=<YOURBUCKET>
 
 
 License

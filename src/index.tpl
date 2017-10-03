@@ -13,7 +13,7 @@
         </select>
     </div>
     <div>filename
-        <input type="file" name="filename" />
+        <input type="file" name="fileupload" />
     </div>
     <div>
         <input type="submit" value="Upload" />
