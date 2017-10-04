@@ -7,6 +7,9 @@ import argparse
 import tempfile
 
 
+prefix_regex = '<prefix:re:(()|/poboys)>'  # this allows the webapp to be hosted either at www.example.com or at www.example.com/poboys
+
+
 platforms = ['noarch', 'linux-64', 'win-64', 'osx-64']
 
 
@@ -46,13 +49,14 @@ def reindex_platform_dir(platform_dir):
     return ['repodata.json', 'repodata.json.bz2', '.index.json']
 
 
-@get('/')
-def index():
-    return template('index', platforms=platforms)
+@get(prefix_regex)
+@get(prefix_regex + '/')
+def index(prefix):
+    return template('index', prefix=prefix, platforms=platforms)
 
 
-@post('/upload')
-def do_upload():
+@post(prefix_regex + '/upload')
+def do_upload(prefix):
     platform = request.forms.get('platform')
     fileupload = request.files.get('fileupload')
     filename = fileupload.filename
@@ -77,29 +81,29 @@ def do_upload():
             reindex_platform_dir(platform_dir)
             abort(404, "Failed to upload to S3 %s with exception %s" % (s3_bucket, str(e)))
 
-    redirect('/pkgs/' + platform)
+    redirect(prefix + '/pkgs/' + platform)
 
 
-@get('/pkgs')
-def get_pkgs():
+@get(prefix_regex + '/pkgs')
+def get_pkgs(prefix):
     pkgs_dir = ensure_pkgs_dir_exists()
     filelist = sorted([ f for f in os.listdir(pkgs_dir) ])
-    return template('filelist_to_links', header='Current Platforms', parenturl='/pkgs', filelist=filelist, allow_delete=False)
+    return template('filelist_to_links', header='Current Platforms', prefix=prefix, parenturl='/pkgs', filelist=filelist, allow_delete=False)
 
 
-@get('/pkgs/<platform>')
-def get_platform(platform):
+@get(prefix_regex + '/pkgs/<platform>')
+def get_platform(prefix, platform):
     if not platform in platforms:
         return "Unknown platform " + platform
 
     platform_dir = ensure_platform_dir_exists(platform)
 
     filelist = sorted([ f for f in os.listdir(platform_dir) ])
-    return template('filelist_to_links', header='Packages', parenturl='/pkgs/'+platform, filelist=filelist, allow_delete=True)
+    return template('filelist_to_links', header='Packages', prefix=prefix, parenturl='/pkgs/'+platform, filelist=filelist, allow_delete=True)
 
 
-@get('/pkgs/<platform>/<filename>')
-def get_file(platform, filename):
+@get(prefix_regex + '/pkgs/<platform>/<filename>')
+def get_file(prefix, platform, filename):
     if not platform in platforms:
         return "Unknown platform " + platform
 
@@ -108,8 +112,8 @@ def get_file(platform, filename):
     return static_file(filename, root=platform_dir, download=filename)
 
 
-@post('/delete/pkgs/<platform>/<filename>')
-def del_file(platform, filename):
+@post(prefix_regex + '/delete/pkgs/<platform>/<filename>')
+def del_file(prefix, platform, filename):
     if not platform in platforms:
         return "Unknown platform " + platform
 
@@ -141,7 +145,7 @@ def del_file(platform, filename):
     # commit the delete
     os.remove(os.path.join(tempdir, filename))
 
-    redirect('/pkgs/'+platform)
+    redirect(prefix + '/pkgs/' + platform)
 
 
 if __name__ == '__main__':

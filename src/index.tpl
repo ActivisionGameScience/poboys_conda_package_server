@@ -1,10 +1,10 @@
 <h1>Poboy's Conda Package Server</h1>
 
 <h2>Browse</h2>
-<a href="pkgs">Package list</a>
+<a href="{{prefix}}/pkgs">Package list</a>
 
 <h2>Upload</h2>
-<form action="/upload" method="post" enctype="multipart/form-data">
+<form action="{{prefix}}/upload" method="post" enctype="multipart/form-data">
     <div>platform
         <select name="platform">
             %for platform in platforms:
