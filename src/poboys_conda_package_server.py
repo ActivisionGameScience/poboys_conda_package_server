@@ -1,19 +1,43 @@
 #!/bin/env python
 
-from bottle import get, post, run, template, request, static_file, redirect, abort
+from bottle import default_app, get, post, template, request, static_file, redirect, abort
 import os
 from subprocess import call
 import argparse
 import tempfile
+import sys
+import logging
 
+log = logging.getLogger(__name__)
+out_hdlr = logging.StreamHandler(sys.stdout)
+out_hdlr.setFormatter(logging.Formatter('%(asctime)s %(message)s'))
+out_hdlr.setLevel(logging.INFO)
+log.addHandler(out_hdlr)
+log.setLevel(logging.INFO)
 
-prefix_regex = '<prefix:re:(()|/poboys)>'  # this allows the webapp to be hosted either at www.example.com or at www.example.com/poboys
-
+# need to parse args right away because decorators depend on args
+prefix = None
+s3_bucket = None
+parser = argparse.ArgumentParser()
+parser.add_argument("--port", type=int, help="port to listen on")
+parser.add_argument("--s3_bucket", help="S3 bucket to sync with")
+parser.add_argument("--prefix", help="Prefix to also serve webpage at, i.e. www.example.com and www.example.com/prefix/")
+args = parser.parse_args()
+if not args.port:
+    args.port = 6969
+if args.s3_bucket:
+    import boto3
+    s3_bucket = args.s3_bucket
+if args.prefix:
+    if not args.prefix.startswith('/'):
+        args.prefix = '/' + args.prefix
+    if args.prefix.endswith('/'):
+        args.prefix = args.prefix[:-1]
+    prefix = args.prefix
+else:
+    prefix = '/poboys'
 
 platforms = ['noarch', 'linux-64', 'win-64', 'osx-64']
-
-
-s3_bucket = None
 
 
 def ensure_pkgs_dir_exists():
@@ -49,14 +73,15 @@ def reindex_platform_dir(platform_dir):
     return ['repodata.json', 'repodata.json.bz2', '.index.json']
 
 
-@get(prefix_regex)
-@get(prefix_regex + '/')
-def index(prefix):
+@get('/')
+@get(prefix + '/')
+def index():
     return template('index', prefix=prefix, platforms=platforms)
 
 
-@post(prefix_regex + '/upload')
-def do_upload(prefix):
+@post('/upload')
+@post(prefix + '/upload')
+def do_upload():
     platform = request.forms.get('platform')
     fileupload = request.files.get('fileupload')
     filename = fileupload.filename
@@ -79,20 +104,22 @@ def do_upload(prefix):
             # something went wrong.  Undo everything and bail
             os.remove(os.path.join(platform_dir, filename))
             reindex_platform_dir(platform_dir)
-            abort(404, "Failed to upload to S3 %s with exception %s" % (s3_bucket, str(e)))
+            abort(503, "Failed to upload to S3 %s with exception %s" % (s3_bucket, str(e)))
 
     redirect(prefix + '/pkgs/' + platform)
 
 
-@get(prefix_regex + '/pkgs')
-def get_pkgs(prefix):
+@get('/pkgs')
+@get(prefix + '/pkgs')
+def get_pkgs():
     pkgs_dir = ensure_pkgs_dir_exists()
     filelist = sorted([ f for f in os.listdir(pkgs_dir) ])
     return template('filelist_to_links', header='Current Platforms', prefix=prefix, parenturl='/pkgs', filelist=filelist, allow_delete=False)
 
 
-@get(prefix_regex + '/pkgs/<platform>')
-def get_platform(prefix, platform):
+@get('/pkgs/<platform>')
+@get(prefix + '/pkgs/<platform>')
+def get_platform(platform):
     if not platform in platforms:
         return "Unknown platform " + platform
 
@@ -102,8 +129,9 @@ def get_platform(prefix, platform):
     return template('filelist_to_links', header='Packages', prefix=prefix, parenturl='/pkgs/'+platform, filelist=filelist, allow_delete=True)
 
 
-@get(prefix_regex + '/pkgs/<platform>/<filename>')
-def get_file(prefix, platform, filename):
+@get('/pkgs/<platform>/<filename>')
+@get(prefix + '/pkgs/<platform>/<filename>')
+def get_file(platform, filename):
     if not platform in platforms:
         return "Unknown platform " + platform
 
@@ -112,8 +140,9 @@ def get_file(prefix, platform, filename):
     return static_file(filename, root=platform_dir, download=filename)
 
 
-@post(prefix_regex + '/delete/pkgs/<platform>/<filename>')
-def del_file(prefix, platform, filename):
+@post('/delete/pkgs/<platform>/<filename>')
+@post(prefix + '/delete/pkgs/<platform>/<filename>')
+def del_file(platform, filename):
     if not platform in platforms:
         return "Unknown platform " + platform
 
@@ -140,7 +169,7 @@ def del_file(prefix, platform, filename):
             # something went wrong.  Undo everything and bail
             os.rename(os.path.join(tempdir, filename), os.path.join(platform_dir, filename))
             reindex_platform_dir(platform_dir) 
-            abort(404, "Failed to delete from S3 bucket %s with exception %s" % (s3_bucket, str(e)))
+            abort(503, "Failed to delete from S3 bucket %s with exception %s" % (s3_bucket, str(e)))
 
     # commit the delete
     os.remove(os.path.join(tempdir, filename))
@@ -149,20 +178,13 @@ def del_file(prefix, platform, filename):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--port", type=int, help="port to listen on")
-    parser.add_argument("--s3_bucket", help="S3 bucket to sync with")
-    args = parser.parse_args()
-    if not args.port:
-        args.port = 6969
-    if args.s3_bucket:
-        import boto3
-        s3_bucket = args.s3_bucket
-
     for platform in platforms:
         ensure_platform_dir_exists(platform)
         os.chdir('pkgs/'+platform)
         call(["conda", "index"])
         os.chdir('../../')
 
-    run(host='0.0.0.0', port=args.port, debug=True)
+    app = default_app()
+
+    log.info("Serving on port %d" % args.port)
+    app.run(host='0.0.0.0', port=args.port, debug=True)
